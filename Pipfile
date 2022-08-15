@@ -10,6 +10,7 @@ python_version = "3"
 constructs = "~=10.1.68"
 cdk8s = "~=2.3.76"
 cdk8s-plus-22 = "~=2.0.0.rc74"
+cdk8s-image = "*"
 
 [pipenv]
 allow_prereleases = true

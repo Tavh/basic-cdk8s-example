@@ -1,4 +1,48 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: test
+  name: span-search
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: span-search
+  namespace: span-search
+spec:
+  selector:
+    matchLabels:
+      app: span-search
+  template:
+    metadata:
+      labels:
+        app: span-search
+    spec:
+      containers:
+        - env:
+            - name: PORT
+              value: "5000"
+          image: tavh/span-search@sha256:687f19f2548b3a3cd9d5ff81a2c20b76eb3c50f7bb91d0237a8cc172e5204848
+          name: span-search
+          ports:
+            - containerPort: 5000
+          resources:
+            limits:
+              cpu: 500m
+              memory: 0.3Gi
+            requests:
+              cpu: 250m
+              memory: 0.1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: span-search
+  namespace: span-search
+spec:
+  ports:
+    - appProtocol: TCP
+      name: span-search
+      port: 80
+      targetPort: 5000
+  selector:
+    app: span-search
