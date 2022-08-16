@@ -40,9 +40,30 @@ metadata:
   namespace: span-search
 spec:
   ports:
-    - appProtocol: TCP
-      name: span-search
-      port: 80
+    - name: span-search
+      port: 5000
       targetPort: 5000
   selector:
     app: span-search
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: basic-cdk8s-example-ingress-c80fda26
+spec:
+  defaultBackend:
+    service:
+      name: span-search
+      port:
+        number: 5000
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - backend:
+              service:
+                name: span-search
+                port:
+                  number: 5000
+            path: /
+            pathType: Prefix

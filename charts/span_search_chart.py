@@ -26,6 +26,14 @@ from imports.k8s import (
     ResourceRequirements,
     ServicePort,
     ServiceSpec,
+    KubeIngress,
+    IngressSpec,
+    IngressRule,
+    IngressBackend,
+    HttpIngressRuleValue,
+    HttpIngressPath,
+    IngressServiceBackend,
+    ServiceBackendPort,
 )
 from cdk8s_image import Image
 
@@ -43,11 +51,11 @@ class SpanSearchChart(Chart):
         env_vars: list[EnvVar],
         ):
         super().__init__(scope, id)
-
+        
         namespace = KubeNamespace(
             self,
             id="namespace",
-            metadata=ObjectMeta(name="span-search"),
+            metadata=ObjectMeta(name=service_name),
         )
 
         labels = {"app": service_name}
@@ -89,14 +97,48 @@ class SpanSearchChart(Chart):
                 selector=labels,
                 ports=[
                     ServicePort(
-                        port=80,
+                        port=5000,
                         name="span-search",
-                        app_protocol="TCP",
                         target_port=IntOrString.from_number(service_port),
                     )
                 ],
             ),
         )
+
+        ingress = KubeIngress(
+            self, 
+            "ingress",
+            spec=IngressSpec(
+                ingress_class_name="nginx",
+                default_backend=IngressBackend(                                        
+                    service=IngressServiceBackend(
+                        name="span-search",
+                        port=ServiceBackendPort(number=service_port)
+                    )
+                ),
+                rules=[
+                    IngressRule(                
+                        http=HttpIngressRuleValue(
+                            paths=[
+                                HttpIngressPath(
+                                    path_type="Prefix",
+                                    path="/",
+                                    backend=IngressBackend(                                        
+                                        service=IngressServiceBackend(
+                                            name="span-search",
+                                            port=ServiceBackendPort(number=service_port)
+                                        )
+                                    )
+                                )
+                            ],
+                           
+                        )
+                    )
+                ]
+            )
+        )
+    
         
         deployment.add_dependency(namespace)
         service.add_dependency(deployment)
+        ingress.add_dependency(service)
